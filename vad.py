@@ -3,7 +3,7 @@
 
 import collections, contextlib, sys, wave, os
 import webrtcvad
-
+import time
 
 def read_wave(path):
     """Reads a .wav file.
@@ -56,7 +56,7 @@ def frame_generator(frame_duration_ms, audio, sample_rate):
 
 
 def vad_collector(sample_rate, frame_duration_ms,
-                  padding_duration_ms, vad, frames):
+                  padding_duration_ms, vad, record_q, cycle_detect = False):
     """Filters out non-voiced audio frames.
     Given a webrtcvad.Vad and a source of audio frames, yields only
     the voiced audio.
@@ -73,7 +73,8 @@ def vad_collector(sample_rate, frame_duration_ms,
     frame_duration_ms - The frame duration in milliseconds.
     padding_duration_ms - The amount to pad the window, in milliseconds.
     vad - An instance of webrtcvad.Vad.
-    frames - a source of audio frames (sequence or generator).
+    record_q - the queue of frames.
+    cycle_detect - whether cycle detect or not, default False.
     Returns: A generator that yields PCM audio data.
     """
     num_padding_frames = int(padding_duration_ms / frame_duration_ms)
@@ -84,7 +85,9 @@ def vad_collector(sample_rate, frame_duration_ms,
     triggered = False
 
     voiced_frames = []
-    for frame in frames:
+    # for frame in frames:
+    while not record_q.empty():
+        frame = record_q.get()
         is_speech = vad.is_speech(frame.bytes, sample_rate)
 
         sys.stdout.write('1' if is_speech else '0')
@@ -115,36 +118,50 @@ def vad_collector(sample_rate, frame_duration_ms,
             if num_unvoiced > 0.9 * ring_buffer.maxlen:
                 sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
                 triggered = False
-                yield b''.join([f.bytes for f in voiced_frames])
+                # yield b''.join([f.bytes for f in voiced_frames])
+                return b''.join([f.bytes for f in voiced_frames])
+                if not cycle_detect:
+                    break
                 ring_buffer.clear()
                 voiced_frames = []
+        time.sleep(0.05)
+        sys.stdout.flush()
     if triggered:
         sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
     sys.stdout.write('\n')
     # If we have any leftover voiced audio when we run out of input,
     # yield it.
     if voiced_frames:
-        yield b''.join([f.bytes for f in voiced_frames])
+        # yield b''.join([f.bytes for f in voiced_frames])
+        return b''.join([f.bytes for f in voiced_frames])
 
 
 def main():
     
+    name_output = 'blocking'
     audio, sample_rate = read_wave(name_output+'.wav')
-    for vad_mode in range(3):
-        vad = webrtcvad.Vad(vad_mode+1)
-        frames = frame_generator(30, audio, sample_rate)
-        frames = list(frames)
-        print('num of frames',len(frames))
-        segments = vad_collector(sample_rate, 30, 300, vad, frames)
-    #     return segments
-        for i, segment in enumerate(segments):
-            path = os.path.join(name_output,str(vad_mode+1),'chunk-%d-%005d.wav' % (vad_mode+1,i,))
-            print(' Writing %s' % (path,))
-            write_wave(path, segment, sample_rate)
+    vad = webrtcvad.Vad(1)
+    frames = frame_generator(30, audio, sample_rate)
+    frames = list(frames)
+    print('num of frames',len(frames))
+    segments = vad_collector(sample_rate, 30, 300, vad, frames)
+#     return segments
+    print(len(list(segments)))
+    # for i, segment in enumerate(segments):
+        # path = os.path.join(name_output,str(vad_mode+1),'chunk-%d-%005d.wav' % (vad_mode+1,i,))
+        # print(' Writing %s' % (path,))
+        # write_wave(path, segment, sample_rate)
 
             
             
 if __name__ == '__main__':
             
-    main()
-
+    name_output = 'blocking'
+    audio, sample_rate = read_wave(name_output+'.wav')
+    vad = webrtcvad.Vad(1)
+    frames = frame_generator(30, audio, sample_rate)
+    frames = list(frames)
+    print('num of frames',len(frames))
+    segments = vad_collector(sample_rate, 30, 300, vad, frames)
+#     return segments
+    # print(len(list(segments)))
