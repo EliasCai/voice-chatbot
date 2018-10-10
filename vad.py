@@ -88,7 +88,8 @@ def vad_collector(sample_rate, frame_duration_ms,
     # for frame in frames:
     while not record_q.empty():
         frame = record_q.get()
-        is_speech = vad.is_speech(frame.bytes, sample_rate)
+        # is_speech = vad.is_speech(frame.bytes, sample_rate)
+        is_speech = vad.is_speech(frame, sample_rate)
 
         sys.stdout.write('1' if is_speech else '0')
         if not triggered:
@@ -99,7 +100,8 @@ def vad_collector(sample_rate, frame_duration_ms,
             # TRIGGERED state.
             if num_voiced > 0.9 * ring_buffer.maxlen:
                 triggered = True
-                sys.stdout.write('+(%s)' % (ring_buffer[0][0].timestamp,))
+                # sys.stdout.write('+(%s)' % (ring_buffer[0][0].timestamp,))
+                sys.stdout.write('+(%s)' % ('!'))
                 # We want to yield all the audio we see from now until
                 # we are NOTTRIGGERED, but we have to start with the
                 # audio that's already in the ring buffer.
@@ -116,24 +118,28 @@ def vad_collector(sample_rate, frame_duration_ms,
             # unvoiced, then enter NOTTRIGGERED and yield whatever
             # audio we've collected.
             if num_unvoiced > 0.9 * ring_buffer.maxlen:
-                sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+                # sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+                sys.stdout.write('-(%s)' % ('!'))
                 triggered = False
                 # yield b''.join([f.bytes for f in voiced_frames])
-                return b''.join([f.bytes for f in voiced_frames])
+                # return b''.join([f.bytes for f in voiced_frames])
+                return b''.join([f for f in voiced_frames])
                 if not cycle_detect:
                     break
                 ring_buffer.clear()
                 voiced_frames = []
-        time.sleep(0.05)
+        time.sleep(0.02)
         sys.stdout.flush()
     if triggered:
-        sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+        # sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+        sys.stdout.write('-(%s)' % ('!'))
     sys.stdout.write('\n')
     # If we have any leftover voiced audio when we run out of input,
     # yield it.
     if voiced_frames:
         # yield b''.join([f.bytes for f in voiced_frames])
-        return b''.join([f.bytes for f in voiced_frames])
+        # return b''.join([f.bytes for f in voiced_frames])
+        return b''.join([f for f in voiced_frames])
 
 
 def main():

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-import record
-import vad
-from record import Recorder, RecordingFile
+
 from threading import Thread
 
-import hotword.snowboydecoder as snowboydecoder
+import snowboydecoder 
 import sys
 import signal
 
@@ -21,20 +19,11 @@ def interrupt_callback():
     return interrupted
 
 
-
-def after_hotword():
-    with rec.open('vad.wav', 'wb') as recfile:
-        t_rec = Thread(target=recfile.record_to_queue, args=(20.,))
-        t_vad = Thread(target=recfile.vad_from_queue)
-        print('begin to record vad')
-        t_rec.start()     
-        t_vad.start()
-        t_rec.join()
-        t_vad.join()
-
 if __name__ == '__main__':
 
-    rec = Recorder(channels=1, rate=16000, frames_per_buffer=480)
+    
+    from imp import reload
+    reload(snowboydecoder)
     
     if len(sys.argv) == 1:
         print("Error: need to specify model name")
@@ -50,7 +39,7 @@ if __name__ == '__main__':
     print('Listening... Press Ctrl+C to exit')
 
     # main loop
-    detector.start(detected_callback=after_hotword,
+    detector.start(detected_callback=snowboydecoder.play_audio_file,
                    interrupt_check=interrupt_callback,
                    sleep_time=0.03)
 
