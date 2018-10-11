@@ -4,6 +4,7 @@
 import collections, contextlib, sys, wave, os
 import webrtcvad
 import time
+from queue import Empty
 
 def read_wave(path):
     """Reads a .wav file.
@@ -85,9 +86,16 @@ def vad_collector(sample_rate, frame_duration_ms,
     triggered = False
 
     voiced_frames = []
+    if not record_q.empty():
+        for i in range(15): # 过滤掉铃声的背景音
+            frame = record_q.get() 
     # for frame in frames:
-    while not record_q.empty():
-        frame = record_q.get()
+    while True: # not record_q.empty():
+        try:
+            frame = record_q.get(timeout=1)
+        except Empty:
+            break
+        
         # is_speech = vad.is_speech(frame.bytes, sample_rate)
         is_speech = vad.is_speech(frame, sample_rate)
 
@@ -128,7 +136,7 @@ def vad_collector(sample_rate, frame_duration_ms,
                     break
                 ring_buffer.clear()
                 voiced_frames = []
-        time.sleep(0.02)
+        # time.sleep(0.03)
         sys.stdout.flush()
     if triggered:
         # sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))

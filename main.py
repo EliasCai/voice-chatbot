@@ -9,7 +9,11 @@ import snowboydecoder
 from vad import vad_collector
 import webrtcvad
 from speech_recognize import get_asr_client
+from chatbot import ChatBot
 
+import urllib.request as ul_re
+import json
+import uuid
 
 interrupted = False
 
@@ -23,27 +27,6 @@ def interrupt_callback():
     global interrupted
     return interrupted
 
-class ChatBot():
-
-    def __init__(self, q):
-
-        self.baidu_client = get_asr_client()
-        self.q = q
-    
-    def vad_from_queue(self):
-            
-        # time.sleep(1)
-        vad = webrtcvad.Vad(1)
-        print('begin to vad')
-        snowboydecoder.play_audio_file()
-        # time.sleep(0.5) # 
-        segments = vad_collector(16000, 30, 300, vad, self.q, False)
-        # segments = list(segments) 
-        if segments:
-            # self.wavefile.writeframes(segments)    
-            res = self.baidu_client.asr(segments, 'wav', 16000, {'dev_pid': 1936,})
-            print(res)
-        return segments
     
 if __name__ == '__main__':
     
@@ -59,14 +42,14 @@ if __name__ == '__main__':
     
     theads = []
     
-    q = Queue()
+    q = Queue(2 * 16000 * 60)
     bot = ChatBot(q)
     with Audio(q=q, channels=1, rate=16000, 
                frames_per_buffer=480) as audio:
         
         audio.start()
         detector = snowboydecoder.HotwordDetector(model, 
-                        sensitivity=0.9)  # 
+                        sensitivity=0.7)  # 
 
             
         detector.config(detected_callback=bot.vad_from_queue, # snowboydecoder.play_audio_file,

@@ -57,7 +57,7 @@ def play_audio_file(fname=DETECT_DING):
         rate=ding_wav.getframerate(), input=False, output=True)
     stream_out.start_stream()
     stream_out.write(ding_data)
-    time.sleep(0.2)
+    time.sleep(0.1)
     stream_out.stop_stream()
     stream_out.close()
     audio.terminate()
@@ -185,7 +185,8 @@ class HotwordDetector(object):
         interrupt_check = self.interrupt_check
         sleep_time = self.sleep_time
         
-        time.sleep(1)
+        # time.sleep(1)
+        print('waiting for hotword')
         
         
         if interrupt_check():

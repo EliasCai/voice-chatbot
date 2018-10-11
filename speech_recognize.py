@@ -43,12 +43,14 @@ def get_asr_client():
     # for wav_file in wav_files[:]:
 
 # baidu_asr = client.asr(get_file_content('vad.wav'), 'wav', 16000, {'dev_pid': 1936,})
-speech, sample_rate = read_wave('vad.wav')
-baidu_asr = client.asr(speech, 'wav', 16000, {'dev_pid': 1936,})
+if __name__ == '__main__':
 
-if 'result' in baidu_asr:
-    print(baidu_asr['result'][0])
-    # f.write(wav_file+','+baidu_asr['result'][0].replace('，','')+','+'\n')
-else:
-    print('error')
-    # f.write(wav_file+','+'error,'+'\n')
+    speech, sample_rate = read_wave('vad.wav')
+    baidu_asr = client.asr(speech, 'wav', 16000, {'dev_pid': 1936,})
+
+    if 'result' in baidu_asr:
+        print(baidu_asr['result'][0])
+        # f.write(wav_file+','+baidu_asr['result'][0].replace('，','')+','+'\n')
+    else:
+        print('error')
+        # f.write(wav_file+','+'error,'+'\n')
