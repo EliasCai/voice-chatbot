@@ -11,7 +11,9 @@ from speech_recognize import get_asr_client
 from vad import vad_collector
 import webrtcvad
 import snowboydecoder 
-
+from tts import TexttoSpeech
+import pyaudio
+import time
 
 bot_config = {}
 
@@ -59,6 +61,7 @@ class ChatBot():
         
         self.baidu_client = get_asr_client()
         self.q = q
+        self.tts = TexttoSpeech()
             
     def _load_data(self):
         
@@ -139,7 +142,24 @@ class ChatBot():
     def do_bot_tts(self, bot_say):
         
         print(bot_say)
+        say_wav = self.tts.gen(bot_say)
+        audio = pyaudio.PyAudio()
+        stream_out = audio.open(
+            format=8,
+            channels=1,
+            # input_device_index=2,
+            rate=16000, input=False, output=True)
+        stream_out.start_stream()
+        stream_out.write(say_wav)
+        time.sleep(0.1)
+        stream_out.stop_stream()
+        stream_out.close()
+        audio.terminate()
+        while not self.q.empty():
+            self.q.get()
     
+    def __del__(self):
+        pass
     
     def post(self, msg, userid='user0'):
         # args = parser.parse_args()
@@ -183,6 +203,8 @@ class ChatBot():
         print('waiting for order')
         snowboydecoder.play_audio_file()
         # time.sleep(0.5) # 
+        while not self.q.empty():
+            self.q.get()
         segments = vad_collector(16000, 30, 300, vad, self.q, False)
         # segments = list(segments) 
         if segments:
@@ -205,8 +227,9 @@ class ChatBot():
 
 
 if __name__ == '__main__':
-
-    bot = ChatBot()
+    
+    from queue import Queue
+    bot = ChatBot(Queue())
     data = bot._load_data()
     # sys.exit(0)
     bot.post('我要查话费')

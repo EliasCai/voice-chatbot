@@ -6,8 +6,8 @@ from queue import Queue
 import time, wave, sys
 import signal
 import snowboydecoder 
-from vad import vad_collector
-import webrtcvad
+# from vad import vad_collector
+# import webrtcvad
 from speech_recognize import get_asr_client
 from chatbot import ChatBot
 

@@ -86,9 +86,9 @@ def vad_collector(sample_rate, frame_duration_ms,
     triggered = False
 
     voiced_frames = []
-    if not record_q.empty():
-        for i in range(15): # 过滤掉铃声的背景音
-            frame = record_q.get() 
+    # if not record_q.empty():
+        # for i in range(15): # 过滤掉铃声的背景音
+            # frame = record_q.get() 
     # for frame in frames:
     while True: # not record_q.empty():
         try:

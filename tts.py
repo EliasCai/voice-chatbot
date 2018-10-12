@@ -19,9 +19,9 @@ TEXT = "欢迎使用小和对话机器人。";
 # 发音人选择, 0为普通女声，1为普通男生，3为情感合成-度逍遥，4为情感合成-度丫丫，默认为普通女声
 PER = 1
 # 语速，取值0-15，默认为5中语速
-SPD = 7
+SPD = 6
 # 音调，取值0-15，默认为5中语调
-PIT = 5
+PIT = 8
 # 音量，取值0-9，默认为5中音量
 VOL = 9
 # 下载的文件格式, 3：mp3(default) 4： pcm-16k 5： pcm-8k 6. wav
@@ -35,12 +35,6 @@ CUID = "123456PYTHON"
 
 TTS_URL = 'http://tsn.baidu.com/text2audio'
 
-
-class DemoError(Exception):
-    pass
-
-
-"""  TOKEN start """
 
 TOKEN_URL = 'http://openapi.baidu.com/oauth/2.0/token'
 SCOPE = 'audio_tts_post'  # 有此scope表示有tts能力，没有请在网页里勾选
@@ -84,7 +78,7 @@ class TexttoSpeech():
     
         tex = quote_plus(text)  # 此处TEXT需要两次urlencode
         #    print(tex)
-        params = {'tok': self.token, 'tex': tex, 'per': PER, 'spd': SPD, 'pit': PIT, 'vol': VOL, 'aue': AUE, 'cuid': CUID,'lan': 'zh', 'ctp': 1}  # lan ctp 固定参数
+        params = {'tok': self.token, 'tex': tex, 'per': PER, 'spd': SPD, 'pit': PIT, 'vol': VOL, 'aue': WAV, 'cuid': CUID,'lan': 'zh', 'ctp': 1}  # lan ctp 固定参数
         data = urlencode(params)
         #    print('test on Web Browser' + TTS_URL + '?' + data)
 
@@ -102,17 +96,19 @@ class TexttoSpeech():
             has_error = True
 
         save_file = "error.txt" if has_error else 'result.' + FORMAT
-        with open(save_file, 'wb') as of:
-            of.write(result_str)
+        
 
         if has_error:
-            if (IS_PY3):
-                result_str = str(result_str, 'utf-8')
+            
+            result_str = str(result_str, 'utf-8')
             print("tts api  error:" + result_str)
+            return None
+        # print("result saved as :" + save_file)
+        
+        return result_str
+        # with open(save_file, 'wb') as of:
+            # of.write(result_str)
 
-        print("result saved as :" + save_file)
-    
-"""  TOKEN end """
 
 if __name__ == '__main__':
     
