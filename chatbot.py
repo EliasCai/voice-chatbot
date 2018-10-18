@@ -14,6 +14,10 @@ import snowboydecoder
 from tts import TexttoSpeech
 import pyaudio
 import time
+from datetime import datetime
+
+from conn_mysql import Dialog, ConnSQL, Visitor
+
 
 bot_config = {}
 
@@ -62,18 +66,30 @@ class ChatBot():
         self.baidu_client = get_asr_client()
         self.q = q
         self.tts = TexttoSpeech()
+        
+        self.conn_sql = ConnSQL()
+    
+        # new_dialog = Dialog(userid='bot', 
+                              # msg=u'MySQL是Web世界中使用最广泛的数据库服务器', 
+                              # time_stamp='%s'%datetime.now(), 
+                              # showed=0)
+        # conn_sql.insert_data(new_dialog)
+        # conn_sql.select_data()
+        
             
     def _load_data(self):
         
         csv_path = 'data/customer.csv'
         
         data = pd.read_csv(csv_path)
-        
+        data['userid'] = data['userid'].astype(str)
+
         return data
     
     def _query_data(self, userid, date):
         
         data = self.data
+        # print(userid, date)
         return data[(data.userid==userid) & (data.month==date)]
     
     def _match_date(self, s):
@@ -103,7 +119,8 @@ class ChatBot():
                     if len(data) == 0:
                         return '您输入的月份不对，请重新输入'
                     bill = data['bill'].tolist()[0]
-                    return '尊敬的客户' + userid + ',您在' + date[:7] + '的话费为' + str(bill)
+                    name = data['username'].tolist()[0]
+                    return '尊敬的客户' + name + ',您在' + date[:7] + '的话费为' + str(bill) + '元'
         
         return '您输入的日期格式不对，请重新输入'
 
@@ -119,7 +136,8 @@ class ChatBot():
                     if len(data) == 0:
                         return '您输入的月份不对，请重新输入'
                     bill = data['plan'].tolist()[0]
-                    return '尊敬的客户' + userid + ',您在' + date[:7] + '的套餐为' + str(bill)
+                    name = data['username'].tolist()[0]
+                    return '尊敬的客户' + name + ',您在' + date[:7] + '的套餐为' + str(bill)
         
         return '您输入的日期格式不对，请重新输入'
 
@@ -135,13 +153,19 @@ class ChatBot():
                     if len(data) == 0:
                         return '您输入的月份不对，请重新输入'
                     bill = data['traffic'].tolist()[0]
-                    return '尊敬的客户' + userid + ',您在' + date[:7] + '的流量为' + str(bill)
+                    name = data['username'].tolist()[0]
+                    return '尊敬的客户' + name + ',您在' + date[:7] + '的流量为' + str(bill) + 'G'
         
         return '您输入的日期格式不对，请重新输入'
         
     def do_bot_tts(self, bot_say):
         
         print(bot_say)
+        new_dialog = Dialog(userid='bot', 
+                              msg=bot_say, 
+                              time_stamp='%s'%datetime.now(), 
+                              showed=0)
+        self.conn_sql.insert_data(new_dialog)
         say_wav = self.tts.gen(bot_say)
         audio = pyaudio.PyAudio()
         stream_out = audio.open(
@@ -161,9 +185,15 @@ class ChatBot():
     def __del__(self):
         pass
     
-    def post(self, msg, userid='user0'):
+    def post(self, msg):# , userid='user0'):
         # args = parser.parse_args()
         # userid = 'user1' # args['userid']
+        userid = self.conn_sql.select_data()
+        new_dialog = Dialog(userid=userid, 
+                              msg=msg, 
+                              time_stamp='%s'%datetime.now(), 
+                              showed=0)
+        self.conn_sql.insert_data(new_dialog)
         post_data['request']['query'] = msg
         post_data['request']['userid'] = userid
         post_data['bot_session'] = bot_session.get(userid, '')
@@ -220,7 +250,7 @@ class ChatBot():
                 if len(asr) > 0:
                     print('')
                     # print(asr)
-                    self.post(asr,'user2')
+                    self.post(asr)
         print('waiting for hotword')
         return segments    
 
