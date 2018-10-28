@@ -48,7 +48,7 @@ class ConnSQL():
         DB_CONNECT = 'mysql+mysqldb://root:root@10.245.132.42:3306/aiterminal?charset=utf8'
         DB_CONNECT = 'mysql+mysqldb://root:root@192.168.28.97:3306/aiterminal?charset=utf8'
         DB_CONNECT = 'sqlite:///aiterminal.db'
-        engine = create_engine(DB_CONNECT, echo=True, encoding='utf-8')
+        engine = create_engine(DB_CONNECT, echo=False, encoding='utf-8')
         # metadata = MetaData(engine)
         # metadata.create_all()
 

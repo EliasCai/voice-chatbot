@@ -2,8 +2,9 @@
 """
 server of Flask RESTful 
 """
+import requests
 import urllib.request as ul_re
-import json, sys
+import json, sys, time
 import uuid
 import pandas as pd
 import re
@@ -13,7 +14,6 @@ import webrtcvad
 import snowboydecoder 
 from tts import TexttoSpeech
 import pyaudio
-import time
 from datetime import datetime
 
 from conn_mysql import Dialog, ConnSQL, Visitor
@@ -26,7 +26,7 @@ bot_config['OFFICE_AI'] = "24.xxxxxxxx.2592000.1540460121.282335-14282259"
 with open('config.json', 'r') as f:
     bot_config = json.load(f)    
     
-
+IP = "http://119.28.31.49:8081/aichat"
     
 url = 'https://aip.baidubce.com/rpc/2.0/unit/bot/chat?access_token=' + \
        bot_config['QUERY_AI']
@@ -160,7 +160,7 @@ class ChatBot():
         
     def do_bot_tts(self, bot_say):
         
-        print(bot_say)
+        print('bot say:', bot_say)
         new_dialog = Dialog(userid='bot', 
                               msg=bot_say, 
                               time_stamp='%s'%datetime.now(), 
@@ -185,7 +185,137 @@ class ChatBot():
     def __del__(self):
         pass
     
-    def post(self, msg):# , userid='user0'):
+    def post(self, msg):
+        
+        userid = self.conn_sql.select_data()
+        bot_query = {'userid': userid, 
+                     'upmsg': msg}
+        r = requests.post(IP,data=bot_query)
+        print(userid, 'ask:', msg)
+        # print(r.json())
+        
+        new_dialog = Dialog(userid=userid, 
+                              msg=msg, 
+                              time_stamp='%s'%datetime.now(), 
+                              showed=0)
+        self.conn_sql.insert_data(new_dialog) # 将对话插入数据库
+        
+        intent = r.json()['RetIntent']
+        getattr(self, 'do_' + intent.lower())(r.json())
+    
+    def do_built_chat(self, content):
+    
+        bot_say = content['RetMsg']
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_online(self, content):
+        
+        if content['RetActionType'] == 'satisfy':
+            pass
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_smsnum(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetSMS"
+            datetime = content['RetSlot0'] # '2018-09'
+            zw_query = {'dateTime': datetime.replace('-','')}
+            r = requests.post(ZWIP,data=zw_query)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_online(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetOnline"
+            r = requests.post(ZWIP) 
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_smsdelay(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetSMSDelay"
+            r = requests.post(ZWIP)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_respone(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetRespone"
+            r = requests.post(ZWIP)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_fault(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetFault"
+            datetime = content['RetSlot0'] # '2018-09'
+            zw_query = {'dateTime': datetime.replace('-','')}
+            r = requests.post(ZWIP,data=zw_query)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+
+    def do_zw_query_event(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetEvent"
+            datetime = content['RetSlot0'] # '2018-09'
+            zw_query = {'dateTime': datetime.replace('-','')}
+            r = requests.post(ZWIP,data=zw_query)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_service(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetService"
+            datetime = content['RetSlot0'] # '2018-09'
+            zw_query = {'dateTime': datetime.replace('-','')}
+            r = requests.post(ZWIP,data=zw_query)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def do_zw_query_alter(self, content):
+    
+        if content['RetActionType'] == 'satisfy':
+            ZWIP = "http://211.139.210.79:8099/YYSCDataCenter/GetAlter"
+            datetime = content['RetSlot0'] # '2018-09'
+            zw_query = {'dateTime': datetime.replace('-','')}
+            r = requests.post(ZWIP,data=zw_query)
+            bot_say = r.json()['Content']
+        else:
+            bot_say = content['RetMsg']
+        
+        self.do_bot_tts(bot_say)
+    
+    def post2(self, msg):# , userid='user0'):
         # args = parser.parse_args()
         # userid = 'user1' # args['userid']
         userid = self.conn_sql.select_data()
@@ -262,14 +392,7 @@ if __name__ == '__main__':
     bot = ChatBot(Queue())
     data = bot._load_data()
     # sys.exit(0)
-    bot.post('我要查话费')
+    bot.post('查询业务变更')
     bot.post('上个月')
-    bot.post('今年5月')
-    bot.post('')
-    bot.post('昨天')
-    bot.post('去年')
-    bot.post('帮我查流量')
-    bot.post('8月')
-    bot.post('帮我查套餐')
-    bot.post('九月份')
+    # bot.post('今天天气如何')
 

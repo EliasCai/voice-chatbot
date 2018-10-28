@@ -49,7 +49,7 @@ if __name__ == '__main__':
         
         audio.start()
         detector = snowboydecoder.HotwordDetector(model, 
-                        sensitivity=0.7)  # 
+                        sensitivity=[0.7])  # 
 
             
         detector.config(detected_callback=bot.vad_from_queue, # snowboydecoder.play_audio_file,
