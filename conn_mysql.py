@@ -16,6 +16,8 @@ Base = declarative_base()
    # PRIMARY KEY (`time_stamp`)
 # )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+# INSERT INTO visitor (userid,time_stamp,isCurrent)
+# VALUES ('21050632', '2007-01-01 10:00:00', 1);
 
 
 class Dialog(Base):
@@ -45,7 +47,11 @@ class ConnSQL():
         # DB_CONNECT = 'mysql+mysqldb://stkqj:Gmcc_123@127.0.0.1:3306/stkqj?charset=utf8'
         DB_CONNECT = 'mysql+mysqldb://root:root@10.245.132.42:3306/aiterminal?charset=utf8'
         DB_CONNECT = 'mysql+mysqldb://root:root@192.168.28.97:3306/aiterminal?charset=utf8'
-        engine = create_engine(DB_CONNECT, echo=False, encoding='utf-8')
+        DB_CONNECT = 'sqlite:///aiterminal.db'
+        engine = create_engine(DB_CONNECT, echo=True, encoding='utf-8')
+        # metadata = MetaData(engine)
+        # metadata.create_all()
+
         DB_Session = sessionmaker(bind=engine)
         self.session = DB_Session()
         # Base.metadata.create_all(engine)
@@ -84,7 +90,7 @@ if __name__ == '__main__':
                           msg=u'MySQL是Web世界中使用最广泛的数据库服务器', 
                           time_stamp='%s'%datetime.now(), 
                           showed=0)
-    # conn_sql.insert_data(new_dialog)
+    conn_sql.insert_data(new_dialog)
     userid = conn_sql.select_data()
     print(userid)
     
